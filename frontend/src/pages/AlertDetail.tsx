@@ -31,6 +31,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import RuleIcon from '@mui/icons-material/Rule';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
+import { useSnackbar } from 'notistack';
 
 import api from '../api/client';
 import { Alert, AlertStatus, PRIORITY_COLORS, STATUS_COLORS, RISK_BAND_COLORS } from '../types';
@@ -39,6 +40,7 @@ import ShapVisualization from '../components/ShapVisualization';
 const AlertDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   // State
   const [alert, setAlert] = useState<Alert | null>(null);
@@ -116,6 +118,60 @@ const AlertDetail: React.FC = () => {
   const handleCreateCase = () => {
     // Navigate to case creation or open modal
     window.alert('Create Case functionality - to be implemented');
+  };
+
+  const handleMarkAsFraud = async () => {
+    if (!id) return;
+
+    try {
+      setSaving(true);
+      const updated = await api.alerts.updateAlert(id, {
+        status: 'closed',
+        notes: notes ? `${notes}\n\n[Analyst Disposition: FRAUD]` : '[Analyst Disposition: FRAUD]',
+      });
+      setAlert(updated);
+      setStatus('closed');
+      setNotes(updated.notes || '');
+      enqueueSnackbar('Alert marked as FRAUD and closed', {
+        variant: 'error',
+        autoHideDuration: 4000,
+      });
+    } catch (err) {
+      console.error('Error marking alert as fraud:', err);
+      enqueueSnackbar('Failed to mark alert as fraud', {
+        variant: 'error',
+        autoHideDuration: 4000,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMarkAsNotFraud = async () => {
+    if (!id) return;
+
+    try {
+      setSaving(true);
+      const updated = await api.alerts.updateAlert(id, {
+        status: 'closed',
+        notes: notes ? `${notes}\n\n[Analyst Disposition: NOT FRAUD]` : '[Analyst Disposition: NOT FRAUD]',
+      });
+      setAlert(updated);
+      setStatus('closed');
+      setNotes(updated.notes || '');
+      enqueueSnackbar('Alert marked as NOT FRAUD and closed', {
+        variant: 'success',
+        autoHideDuration: 4000,
+      });
+    } catch (err) {
+      console.error('Error marking alert as not fraud:', err);
+      enqueueSnackbar('Failed to mark alert as not fraud', {
+        variant: 'error',
+        autoHideDuration: 4000,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const formatCurrency = (amount: number): string => {
@@ -464,12 +520,31 @@ const AlertDetail: React.FC = () => {
             <Typography variant="subtitle2" gutterBottom>
               Disposition
             </Typography>
-            <Button fullWidth variant="outlined" color="error" sx={{ mb: 1 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              sx={{ mb: 1 }}
+              onClick={handleMarkAsFraud}
+              disabled={saving || alert.status === 'closed'}
+            >
               Mark as Fraud
             </Button>
-            <Button fullWidth variant="outlined" color="success">
+            <Button
+              fullWidth
+              variant="outlined"
+              color="success"
+              onClick={handleMarkAsNotFraud}
+              disabled={saving || alert.status === 'closed'}
+            >
               Mark as Not Fraud
             </Button>
+
+            {alert.status === 'closed' && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}>
+                Alert is closed. Check notes for disposition.
+              </Typography>
+            )}
 
             {/* Metadata */}
             <Divider sx={{ my: 2 }} />
