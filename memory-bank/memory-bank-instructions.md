@@ -71,6 +71,126 @@ Add extra files/folders in `/memory-bank/` for:
 
 ---
 
+## Feature Development Workflow
+
+This workflow defines how features move from concept to production code. It ensures requirements are understood, design is validated, and implementation is structured before code is written.
+
+### Overview: PRD → Design → Tasks → Code
+
+```mermaid
+flowchart LR
+    PRD[📋 PRD] -->|Approve| Design[🎨 Design]
+    Design -->|Approve| Tasks[✅ Tasks]
+    Tasks -->|Implement| Code[💻 Code]
+    Code -->|Review| Done[✨ Complete]
+    
+    PRD -.Update.-> MB[(Memory Bank)]
+    Design -.Update.-> MB
+    Tasks -.Update.-> MB
+    Code -.Update.-> MB
+```
+
+### Phase 1: PRD (Product Requirements Document)
+
+**Goal:** Define WHAT needs to be built and WHY.
+
+**Activities:**
+- Identify the problem to solve
+- Define success criteria
+- Specify user stories and acceptance criteria
+- Document constraints and dependencies
+
+**Deliverables:**
+- `prd.md` in feature folder
+- Update `activeContext.md` with feature scope
+
+**Gate:** User approves PRD before moving to Design
+
+### Phase 2: Design
+
+**Goal:** Define HOW it will be built.
+
+**Activities:**
+- Architect the solution
+- Choose technologies and patterns
+- Design data models and APIs
+- Create system diagrams (use Mermaid)
+- Identify technical risks
+
+**Deliverables:**
+- `design.md` in feature folder
+- Update `systemPatterns.md` if new patterns introduced
+- Update `techContext.md` if new technologies used
+
+**Gate:** User approves Design before moving to Tasks
+
+### Phase 3: Tasks
+
+**Goal:** Break down implementation into trackable units.
+
+**Activities:**
+- Create specific, testable tasks
+- Define acceptance criteria per task
+- Identify dependencies between tasks
+- Estimate complexity
+
+**Deliverables:**
+- `tasks.md` in feature folder with task IDs
+- Update `progress.md` with task list
+
+**Gate:** User approves Tasks before coding begins
+
+### Phase 4: Code & Test
+
+**Goal:** Implement and validate each task.
+
+**Activities:**
+- Implement one task at a time
+- Write tests alongside code
+- Update documentation as you go
+- Review and validate each task
+
+**Deliverables:**
+- Working code with tests
+- Updated `progress.md` with completed tasks
+- Updated `activeContext.md` with recent changes
+- Updated `copilot-rules.md` with new patterns or learnings
+
+**Gate:** All tasks completed and tests passing
+
+### Memory Bank Integration
+
+```mermaid
+flowchart TD
+    Start[Start Feature] --> Create[Create Feature Folder]
+    Create --> PRD[Write PRD]
+    PRD --> UpdateAC1[Update activeContext.md]
+    UpdateAC1 --> ApprovePRD{Approve PRD?}
+    
+    ApprovePRD -->|Yes| Design[Write Design]
+    Design --> UpdateSP[Update systemPatterns.md]
+    UpdateSP --> UpdateTC[Update techContext.md]
+    UpdateTC --> ApproveDesign{Approve Design?}
+    
+    ApproveDesign -->|Yes| Tasks[Write Tasks]
+    Tasks --> UpdateProg1[Update progress.md]
+    UpdateProg1 --> ApproveTasks{Approve Tasks?}
+    
+    ApproveTasks -->|Yes| Code[Implement Task]
+    Code --> Test[Write Tests]
+    Test --> UpdateProg2[Update progress.md]
+    UpdateProg2 --> UpdateAC2[Update activeContext.md]
+    UpdateAC2 --> UpdateRules[Update copilot-rules.md]
+    UpdateRules --> MoreTasks{More Tasks?}
+    
+    MoreTasks -->|Yes| Code
+    MoreTasks -->|No| Complete[Feature Complete]
+```
+
+**Key Principle:** The memory bank is updated incrementally throughout the workflow, not just at the end.
+
+---
+
 ## Core Workflows
 
 ### Plan Mode
