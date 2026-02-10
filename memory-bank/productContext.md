@@ -6,11 +6,16 @@ Below is a comprehensive set of product requirements for a financial crime detec
 
 ## 1) Product intent and scope
 
+**NOTE: Phased Development Approach**
+- **Phase 1 (Local POC)**: Batch scoring, SQLite, rule-based + ML detection, no authentication
+- **Phase 2 (Production)**: Real-time scoring, PostgreSQL, authentication, Docker, CI/CD, cloud deployment
+
 ### 1.1 Goal
 
 Detect and operationalize investigation of fraudulent mobile money transactions (primarily TRANSFER and CASH-OUT patterns consistent with account depletion) using:
 
-*   Real-time and batch scoring
+*   Batch scoring (Phase 1) and real-time scoring (Phase 2+)
+*   ML-based detection + rule-based detection (both phases)
 *   Alerting and case management
 *   Explainability and auditability suitable for regulated environments
 
@@ -35,13 +40,31 @@ Allowed for modeling/features:
 *   Platform / Data Engineer: maintain pipelines, availability, security
 *   Product Owner: configure policies, thresholds, SLAs, roadmap
 
-### 1.4 In-scope (Phase 1–2)
+### 1.4 In-scope (Phase 1 - Local POC)
 
-*   Transaction ingestion (streaming + batch)
-*   Feature computation, model scoring, and alert generation
-*   Investigator console: alerts, cases, entity views, explanation
+*   Transaction batch ingestion and processing
+*   Feature computation and feature engineering (excluding forbidden columns)
+*   **Rule-based fraud detection (deterministic rules)**
+*   ML model scoring (scikit-learn/XGBoost)
+*   Combined decision logic (ML + rules)
+*   Alert generation and queue management
+*   Basic case management
+*   Investigator console: alerts, cases, entity views, explanation (SHAP + rule reasons)
+*   SQLite database for local storage
+*   No authentication (local demo only)
+
+### 1.4b In-scope (Phase 2 - Production Deployment)
+
+*   Real-time streaming transaction ingestion
+*   Authentication and authorization (JWT/OAuth)
+*   PostgreSQL database with proper migrations
+*   Docker containerization and CI/CD
+*   Cloud deployment (AWS/GCP/Azure)
+*   Redis caching for features and sessions
+*   Feature store integration
+*   Model registry and versioning
+*   Governance: audit trails, access control
 *   Feedback loop: dispositions into training/monitoring
-*   Governance: audit trails, access control, model registry
 
 ### 1.5 Out-of-scope (initially)
 
@@ -172,15 +195,19 @@ Acceptance criteria:
 
 ### 2.1.2 Front-end non-functional requirements
 
+**Phase 1 (Local POC)**:
+*   No authentication required (local demo only)
+*   Basic input validation
+*   Simple logging for debugging
+*   Accessibility: WCAG 2.1 AA (best effort)
+*   Localization-ready: currency formatting, time zones
+
+**Phase 2+ (Production)**:
 *   Role-based access control (RBAC):
     *   Analyst vs Lead vs Admin vs Auditor (read-only)
 *   Security:
     *   SSO integration (OIDC/SAML), MFA enforced by IdP
     *   Session timeouts, device posture optional
-*   Accessibility:
-    *   WCAG 2.1 AA
-*   Localization-ready:
-    *   currency formatting, time zones
 *   Auditability:
     *   all UI actions producing state changes create audit events
 
@@ -248,23 +275,59 @@ Feature store requirements:
 *   Offline feature store for training parity (“training/serving skew” controls)
 *   Feature definitions versioned and tested
 
-### 2.2.3 Scoring service (Model inference)
-
-Requirements:
-
-*   Real-time scoring API:
+#*Phase 1 (Batch Processing)**:
+*   Batch scoring API:
     *   Input: transaction event + derived features
     *   Output: risk score, risk band, reason codes, model version, timestamp
-*   Batch scoring:
-    *   Process N transactions, write results to scored table, emit alerts
+*   Process transactions in batches (CSV/JSON files)
+*   Write results to SQLite database
+*   Latency target: < 1 second per transaction (acceptable for demo)
+
+**Phase 2+ (Real-time Processing)**:
+*   Real-time scoring API:
+    *   Input: streaming transaction event + derived features
+    *   Output: risk score, risk band, reason codes, model version, timestamp
 *   Latency and throughput targets (configurable):
-    *   P95 < 150ms per event (excluding feature computation) for real-time path
-    *   Support 500 TPS baseline, burst 5k TPS (scalable)
+    **Hybrid detection approach (Phase 1+)**:
+    *   ML-based scoring (probabilistic risk assessment)
+    *   Rule-based detection (deterministic fraud patterns)
+    *   Combined decision logic
 
-### 2.2.4 Decisioning and alert generation
+*   **Rule-Based Detection Engine**:
+    *   High-value TRANSFER rule:
+        *   Trigger: `type == 'TRANSFER' AND amount > 200,000`
+        *   Reason code: "HIGH_VALUE_TRANSFER"
+    *   Velocity-based rules:
+        *   Trigger: Transaction count from same origin exceeds threshold in time window
+        *   Example: `tx_count_24h > 10` or `total_amount_1h > 500,000`
+        *   Reason codes: "HIGH_VELOCITY_COUNT", "HIGH_VELOCITY_AMOUNT"
+    *   Sequence pattern rules:
+        *   Trigger: TRANSFER followed by CASH-OUT within short time window
+        *   Example: `type == 'CASH_OUT' AND prev_tx_type == 'TRANSFER' AND time_diff < 1_hour`
+        *   Reason code: "SUSPICIOUS_SEQUENCE"
+    *   Configurable thresholds per rule type
 
-Requirements:
-
+*   Decision policy engine that combines:
+    *   ML model score threshold(s): Low/Medium/High risk bands
+    *   Deterministic rules (as defined above)
+    *   Suppression/allow lists (entity-level exceptions; governed) - Phase 2+
+    
+*   Alert creation:
+    *   Create alert if:
+        *   ML score >= threshold OR rule triggered OR both (configurable)
+    *   Alert metadata includes:
+        *   ML score and confidence
+        *   List of triggered rules with reason codes
+        *   Feature contributions (SHAP values)
+    *   Deduplicate alerts (Phase 2+):
+        *   If same orig-dest pair triggers within X minutes, merge or link
+        
+*   Prioritization:
+    *   Priority = f(ML score, amount, triggered rules count, entity history)
+    *   Critical: High ML score (>0.8) AND rule triggered
+    *   High: High ML score OR multiple rules triggered
+    *   Medium: Medium ML score (0.5-0.8) OR single rule triggered
+    *   Low: Low ML score (<0.5) with no rule triggers
 *   Decision policy engine that combines:
     *   Model score threshold(s)
     *   Deterministic rules (e.g., amount>200,000 TRANSFER)
@@ -1382,3 +1445,9 @@ If you want, I can also produce:
 *   A full set of user stories with MoSCoW prioritization
 *   A reference architecture diagram (logical + deployment view)
 *   A model validation report template (model risk governance ready)
+
+---
+
+<!-- Generated by Copilot -->
+<!-- Last updated: Phase 1 scope changed to local POC with SQLite, rule-based + ML detection, no authentication -->
+
