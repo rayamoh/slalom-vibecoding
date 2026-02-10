@@ -47,57 +47,28 @@
 - Simple rule engine + ML model integration
 - Basic React UI with local state management
 
-****Phase 1**: Local POC only, no production deployment considerations
-- **Phase 1**: No authentication or security features (deferred to Phase 2)
-- **Phase 2**: Must achieve < 100ms latency for real-time scoring
-- All decisions require audit trails for compliance (Phase 2+)
-- Model explanations required for regulatory acceptance (both phases)
+**Phase 2+ (Scalable)**:
+- Event-driven microservices for scalability
+- Feature store pattern for consistent ML features
 - CQRS pattern for read/write optimization
 - Model registry for version control and deployment
 - Streaming architecture for real-time scoring
 
 ### Key Constraints Acknowledged
 - Cannot use balance columns from dataset due to post-fraud annulment issue
-- Must maintain < 100ms latency for real-time scoring
-- All decisions require audit trails for compliance
-- Model explanations required for regulatory acceptance
+- **Phase 1**: Local POC only, no production deployment considerations
+- **Phase 1**: No authentication or security features (deferred to Phase 2)
+- **Phase 2**: Must achieve < 100ms latency for real-time scoring
+- All decisions require audit trails for compliance (Phase 2+)
+- Model explanations required for regulatory acceptance (both phases)
 
 ## Next Steps
-updated memory bank documentation
-2. Set up repository structure (without `/infrastructure` for now)
-3. Create `.env.example` with SQLite configuration
-4. Initialize basic project scaffolding
 
-### Short-term (Phase 1 - Local POC)
-1. **Data & Models**
-   - Obtain PaySim dataset
-   - Perform EDA and feature engineering (without forbidden balance columns)
-   - Train baseline fraud detection model
-   - Implement SHAP explainability
-
-2. **Rule-Based Detection (NEW)**
-   - Implement high-value TRANSFER rule (amount > 200k)
-   - Implement velocity-based rules
-   - Implement sequence pattern rules (TRANSFER → CASH-OUT)
-   - Create combined decision engine (ML + Rules)
-
-3. **Backend API**
-   - Set up FastAPI project structure
-   - Configure SQLite with Alembic migrations
-   - Implement transaction batch ingestion
-   - Implement model scoring service
-   - Implement rule engine
-   - Implement alert generation logic (ML + Rules)
-   - Basic CRUD for alerts and cases
-
-4. **Frontend Console**
-   - Set up React TypeScript project
-   - Build alert queue view
-   - Build alert detail view with explanations (SHAP + Rule reasons)
-   - Implement basic case management
-
-5. **Local Setup**
-   - Create seed data script
+### Immediate (Phase 0 - Foundation)
+1. Review parallel-dev-plan.md and assign developers
+2. Set up 3 separate development branches (backend, ml-rules, frontend)
+3. Create API contract document (already in parallel-dev-plan.md)
+4. Set up communication channels (daily standups, integration meetings)
    - Write local development documentation
    - Basic error handling
 
@@ -126,6 +97,46 @@ updated memory bank documentation
 - [ ] What authentication system should be used? (OAuth, SAML, etc.)
 - [ ] Specific compliance requirements beyond basic audit trails?
 
+### Week 1 (Independent Development Start)
+**Developer 1 (Backend)**:
+- Set up FastAPI project structure
+- Create SQLite schema with Alembic
+- Build seed data script with 100+ sample alerts
+- Implement health check endpoint
+
+**Developer 2 (ML/Rules)**:
+- Obtain PaySim dataset
+- Start EDA notebook
+- Begin feature engineering work
+- Set up model training pipeline
+
+**Developer 3 (Frontend)**:
+- Set up React TypeScript project
+- Create mock data for alerts, cases, entities
+- Build Alert Queue page with mock data
+- Implement filtering and sorting UI
+
+### Week 2 (Partial Integration)
+**Developer 1**: Complete all CRUD endpoints, provide API to Developer 3  
+**Developer 2**: Complete model training + rule engine, provide scoring module  
+**Developer 3**: Switch from mock data to real Backend API
+
+### Week 3-4 (Full Integration & Demo)
+- Integrate ML/Rules scoring service with Backend
+- End-to-end testing: Upload transactions → Generate alerts → Triage in UI
+- Prepare demo scenarios
+- Documentation and polish
+
+## Open Questions
+- [ ] **Phase 1**: What subset of PaySim data to use for POC demo?
+- [ ] **Phase 1**: What are the specific rule thresholds for demo purposes?
+- [ ] **Phase 1**: Who are the 3 developers and their skill levels?
+- [ ] **Phase 2**: What is the specific deployment target? (AWS/GCP/Azure/on-prem)
+- [ ] **Phase 2**: What is the expected transaction volume? (for capacity planning)
+- [ ] **Phase 2**: Are there existing systems to integrate with?
+- [ ] **Phase 2**: What authentication system should be used? (OAuth, SAML, etc.)
+- [ ] **Phase 2**: Specific compliance requirements beyond basic audit trails?
+
 ## Blockers
 None currently - in documentation and planning phase.
 
@@ -134,3 +145,8 @@ None currently - in documentation and planning phase.
 - productContext.md contains extensive PRD - can be used to generate design documents
 - Need to create feature-specific folders when starting specific features
 - Memory bank should be updated incrementally as work progresses
+- **Phase 1 is POC only**: Minimal viable demo to prove concept with 3 developers working in parallel
+- **Phase 2 is production**: Full security, scalability, deployment
+- **📘 See parallel-dev-plan.md for complete parallel development specifications**
+
+<!-- Generated by Copilot -->
